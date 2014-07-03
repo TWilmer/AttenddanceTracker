@@ -219,6 +219,8 @@ public class AttendActitivty extends Activity  {
 						entries[dom].breakend=getCurTime();
 					if( entries[dom].breakend.length()<1)
 						entries[dom].breakend=getCurTime();
+					if( entries[dom].breakend.equals(entries[dom].breakstart))
+						entries[dom].breakend=getCurTime();
 				}else{
 					entries[dom].breakend="";
 				}
@@ -230,7 +232,7 @@ public class AttendActitivty extends Activity  {
 				entries[dom].breakstart=getCurTime();
 			if(entries[dom].breakstart.length()<1)
 				entries[dom].breakstart=getCurTime();
-			entries[dom].breakend=getCurTime();
+			entries[dom].breakend=entries[dom].breakstart;
 			entries[dom].leaving=getCurTime();
 		}
 		entries[dom].comment=editable;
