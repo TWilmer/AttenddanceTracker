@@ -36,6 +36,14 @@
             android:name="de.twapps.attendancetracker.SettingsActivity"
             android:label="@string/title_activity_settings" >
         </activity>
+
+        <receiver android:name="de.twapps.attendancetracker.AlarmServiceClass" >
+        </receiver>
+
+        <activity
+            android:name="de.twapps.attendancetracker.AlarmActivity"
+            android:label="@string/title_activity_alarm" >
+        </activity>
     </application>
 
 </manifest>

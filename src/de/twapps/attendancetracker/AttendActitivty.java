@@ -17,14 +17,21 @@ import java.util.Locale;
 
 
 
+
+
+
+
 import android.app.Activity;
 import android.app.ActionBar;
+import android.app.AlarmManager;
 import android.app.Fragment;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.IntentSender.SendIntentException;
+import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.Editable;
@@ -37,6 +44,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.os.Build;
@@ -154,7 +162,7 @@ public class AttendActitivty extends Activity  {
 		File f=new File(path);
 		return f;
 	}
-	static void appendAttendance(eAction action, String editable, String name, String number){
+	 void appendAttendance(eAction action, String editable, String name, String number){
 		Calendar c = Calendar.getInstance(); 
 		int dom=c.get(Calendar.DAY_OF_MONTH);
 		int  hour=c.get(Calendar.HOUR_OF_DAY);
@@ -207,9 +215,41 @@ public class AttendActitivty extends Activity  {
 		}
 		if(action==eAction.ATTEND)
 		{
-			if(entries[dom].coming==null)
+			final SharedPreferences p=this.getSharedPreferences("de.twapps.attendancetracker",  MODE_PRIVATE );
+			{
+				long nextAlarm=p.getLong("alarm", 0);
+				if(nextAlarm>0)
+				{
+					if(nextAlarm - System.currentTimeMillis() <0 ||
+							nextAlarm - System.currentTimeMillis() <5*60*60)
+					{
+						Intent intent = new Intent(this, AlarmActivity.class);
+						PendingIntent pendingIntent = PendingIntent.getActivity(AttendActitivty.this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+						AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+						alarmManager.cancel(pendingIntent);
+						Editor  e=p.edit();
+						e.putLong("alarm", 0);
+						e.commit();
+					}
+				}
+			}
+			if(entries[dom].coming==null){
+				AlarmManager am=(AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+				Intent intent = new Intent(AttendActitivty.this, AlarmActivity.class);
+				int seconds=10 * 60 *60 + 40 *60;
+				
+				long alarm  =System.currentTimeMillis() + seconds * 1000;
+				Editor  e=p.edit();
+				e.putLong("alarm", alarm);
+				e.commit();
+				PendingIntent pendingIntent = PendingIntent.getActivity(AttendActitivty.this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+				((AlarmManager) getSystemService(ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, alarm, pendingIntent);
+				
+				
+			
+				
 				entries[dom].coming=getCurTime();
-
+			}
 			entries[dom].leaving=getCurTime();
 			if(entries[dom].breakstart!=null)
 			{
@@ -287,6 +327,7 @@ public class AttendActitivty extends Activity  {
 		inTextView=(TextView)findViewById(R.id.inView);
 		outTextView=(TextView)findViewById(R.id.outView);
 		breakView=(TextView)findViewById(R.id.pauseText);
+		presenceView=(ImageView)findViewById(R.id.presenceImage);
 
 		commentText=(EditText)findViewById(R.id.commentText);
 		inTextView.setText("");
@@ -365,7 +406,7 @@ public class AttendActitivty extends Activity  {
 	TextView numberView;
 	EditText commentText;
 	Button   pauseButton;
-
+    ImageView presenceView;
 
 
 
@@ -375,6 +416,13 @@ public class AttendActitivty extends Activity  {
 		final SharedPreferences p=getSharedPreferences("de.twapps.attendancetracker",  MODE_PRIVATE );
 		String name=p.getString("name", "Your Name");
 		String number=p.getString("number", "1234567");
+		long alarm=p.getLong("alarm", 0);
+		if(alarm>0)
+		{
+			presenceView.setImageResource(android.R.drawable.presence_online);
+		}else{
+			presenceView.setImageResource(android.R.drawable.presence_offline);
+		}
 		nameView.setText(name);
 		numberView.setText(number);
 
