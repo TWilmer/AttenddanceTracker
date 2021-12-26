@@ -162,6 +162,17 @@ public class AttendActitivty extends Activity  {
 		File f=new File(path);
 		return f;
 	}
+	void stopAlarm()
+	{
+		final SharedPreferences p=this.getSharedPreferences("de.twapps.attendancetracker",  MODE_PRIVATE );
+		Intent intent = new Intent(this, AlarmActivity.class);
+		PendingIntent pendingIntent = PendingIntent.getActivity(AttendActitivty.this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+		AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+		alarmManager.cancel(pendingIntent);
+		Editor  e=p.edit();
+		e.putLong("alarm", 0);
+		e.commit();
+	}
 	 void appendAttendance(eAction action, String editable, String name, String number){
 		Calendar c = Calendar.getInstance(); 
 		int dom=c.get(Calendar.DAY_OF_MONTH);
@@ -215,25 +226,9 @@ public class AttendActitivty extends Activity  {
 		}
 		if(action==eAction.ATTEND)
 		{
-			final SharedPreferences p=this.getSharedPreferences("de.twapps.attendancetracker",  MODE_PRIVATE );
-			{
-				long nextAlarm=p.getLong("alarm", 0);
-				if(nextAlarm>0)
-				{
-					if(nextAlarm - System.currentTimeMillis() <0 ||
-							nextAlarm - System.currentTimeMillis() <5*60*60)
-					{
-						Intent intent = new Intent(this, AlarmActivity.class);
-						PendingIntent pendingIntent = PendingIntent.getActivity(AttendActitivty.this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
-						AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-						alarmManager.cancel(pendingIntent);
-						Editor  e=p.edit();
-						e.putLong("alarm", 0);
-						e.commit();
-					}
-				}
-			}
+		
 			if(entries[dom].coming==null){
+				final SharedPreferences p=this.getSharedPreferences("de.twapps.attendancetracker",  MODE_PRIVATE );
 				AlarmManager am=(AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
 				Intent intent = new Intent(AttendActitivty.this, AlarmActivity.class);
 				int seconds=10 * 60 *60 + 40 *60;
@@ -251,6 +246,10 @@ public class AttendActitivty extends Activity  {
 				entries[dom].coming=getCurTime();
 			}
 			entries[dom].leaving=getCurTime();
+			if(!entries[dom].coming.equals(entries[dom].leaving))
+			{
+				stopAlarm();
+			}
 			if(entries[dom].breakstart!=null)
 			{
 				if(entries[dom].breakstart.length()>0)
